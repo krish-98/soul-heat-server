@@ -1,10 +1,9 @@
 const express = require("express")
 const app = express()
+const cors = require("cors")
 
 require("dotenv").config()
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY)
-
-const cors = require("cors")
 
 app.use(cors())
 app.use(express.static("public"))
@@ -25,7 +24,7 @@ app.post("/checkout-payment", async (req, res) => {
       payment_method_types: ["card"],
       billing_address_collection: "auto",
       shipping_options: [{ shipping_rate: "shr_1NeFaFSBzzrld9LFwwmTon9O" }],
-      line_items: req.body.map((item) => {
+      line_items: req?.body?.map((item) => {
         return {
           price_data: {
             currency: "inr",
