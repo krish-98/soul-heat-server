@@ -16,7 +16,6 @@ app.get("/", (req, res) => {
 })
 
 app.post("/checkout-payment", async (req, res) => {
-  console.log(req.body)
   try {
     const session = await stripe.checkout.sessions.create({
       submit_type: "pay",
@@ -32,7 +31,7 @@ app.post("/checkout-payment", async (req, res) => {
               name: item.name,
               images: [`${process.env.CLOUDINARY_URL}${item.imageId}`],
             },
-            unit_amount: item.price * item.quantity,
+            unit_amount: (item.price || item.defaultPrice) + item.quantity,
           },
           adjustable_quantity: {
             enabled: true,
