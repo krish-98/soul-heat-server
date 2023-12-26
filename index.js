@@ -89,6 +89,7 @@ app.use(
           .map((key) => `${key}=${encodeURIComponent(req.query[key])}`)
           .join('&')
         proxyReq.path += `?${query}`
+        console.log(query)
       }
     },
   })
