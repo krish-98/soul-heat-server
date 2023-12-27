@@ -1,30 +1,75 @@
 const express = require('express')
 const cors = require('cors')
-const { createProxyMiddleware } = require('http-proxy-middleware')
 
 const app = express()
 
 require('dotenv').config()
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 
-const corsOptions = {
-  origin: '*',
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: true,
-  optionsSuccessStatus: 204,
-}
-
-app.use(cors(corsOptions))
-
-// app.use(cors())
-app.use(express.static('public'))
+app.use(cors())
 app.use(express.json())
+app.use(express.static('public'))
 
 const PORT = process.env.PORT || 3000
 
-app.get('/api', (req, res) => {
-  console.log(req)
-  res.send('Hola from server!')
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: `Swiggy's API wrapper is working ✔`,
+  })
+})
+
+app.get('/api/restaurants', async (req, res) => {
+  const url = `https://www.swiggy.com/dapi/restaurants/list/v5?lat=9.928668&lng=78.092783&is-seo-homepage-enabled=true&page_type=DESKTOP_WEB_LISTING`
+
+  fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
+    },
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
+      }
+      return response.json()
+    })
+    .then((data) => {
+      res.json(data)
+    })
+    .catch((error) => {
+      console.error(error)
+      res.status(500).send('An error occurred')
+    })
+})
+
+app.get('/api/restaurant/:id', async (req, res) => {
+  const { id } = req.params
+  const url = `https://www.swiggy.com/dapi/menu/pl?page-type=REGULAR_MENU&complete-menu=true&lat=20.275845&lng=85.776639&restaurantId=${id}&catalog_qa=undefined&submitAction=ENTER`
+
+  fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
+    },
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
+      }
+      return response.json()
+    })
+    .then((data) => {
+      res.json(data)
+    })
+    .catch((error) => {
+      console.error(error)
+      res.status(500).send('An error occurred')
+    })
 })
 
 app.post('/checkout-payment', async (req, res) => {
@@ -61,38 +106,5 @@ app.post('/checkout-payment', async (req, res) => {
     res.status(err.statusCode || 500).json(err.message)
   }
 })
-
-app.use(
-  '/api/restaurants',
-  createProxyMiddleware({
-    target: 'https://www.swiggy.com',
-    changeOrigin: true,
-    pathRewrite: {
-      '^/api/restaurants':
-        '/dapi/restaurants/list/v5?lat=9.928668&lng=78.092783&is-seo-homepage-enabled=true&page_type=DESKTOP_WEB_LISTING',
-    },
-  })
-)
-
-app.use(
-  '/api/restaurant/menu',
-  createProxyMiddleware({
-    target: 'https://www.swiggy.com',
-    changeOrigin: true,
-    pathRewrite: {
-      '^/api/restaurant/menu': '/dapi/menu/pl',
-    },
-    // Modify the proxy request to include query parameters
-    onProxyReq(proxyReq, req) {
-      if (req.query) {
-        const query = Object.keys(req.query)
-          .map((key) => `${key}=${encodeURIComponent(req.query[key])}`)
-          .join('&')
-        proxyReq.path += `?${query}`
-        console.log(query)
-      }
-    },
-  })
-)
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
