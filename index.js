@@ -73,35 +73,41 @@ app.get('/api/restaurant/:id', async (req, res) => {
 })
 
 app.post('/api/checkout-payment', async (req, res) => {
+  const { cartItems } = req.body
+
   try {
-    const session = await stripe.checkout.sessions.create({
-      submit_type: 'pay',
-      mode: 'payment',
-      payment_method_types: ['card'],
-      billing_address_collection: 'auto',
-      shipping_options: [{ shipping_rate: 'shr_1NeFaFSBzzrld9LFwwmTon9O' }],
-      line_items: req?.body?.map((item) => {
-        return {
-          price_data: {
-            currency: 'inr',
-            product_data: {
-              name: item.name,
-              images: [`${process.env.CLOUDINARY_URL}${item.imageId}`],
-            },
-            unit_amount: (item.price || item.defaultPrice) + item.quantity,
+    const lineItems = cartItems.map((item) => {
+      return {
+        price_data: {
+          currency: 'inr',
+          product_data: {
+            name: item.name,
+            images: [`${process.env.CLOUDINARY_URL}${item.imageId}`],
           },
-          adjustable_quantity: {
-            enabled: true,
-            minimum: 1,
-          },
-          quantity: item.quantity,
-        }
-      }),
-      success_url: `${process.env.FRONTEND_URL}/success`,
-      cancel_url: `${process.env.FRONTEND_URL}/cancel`,
+          unit_amount: Math.round(
+            item.price || item.defaultPrice + item.quantity
+          ),
+        },
+        adjustable_quantity: {
+          enabled: true,
+          minimum: 1,
+        },
+        quantity: item.quantity,
+      }
     })
 
-    res.status(200).json(session.id)
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: lineItems,
+      mode: 'payment',
+      success_url: `${process.env.FRONTEND_URL}/success`,
+      cancel_url: `${process.env.FRONTEND_URL}/cancel`,
+      submit_type: 'pay',
+      billing_address_collection: 'auto',
+      // shipping_options: [{ shipping_rate: 'shr_1NeFaFSBzzrld9LFwwmTon9O' }],
+    })
+
+    res.json({ id: session.id })
   } catch (err) {
     res.status(err.statusCode || 500).json(err.message)
   }
