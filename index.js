@@ -72,7 +72,7 @@ app.get('/api/restaurant/:id', async (req, res) => {
     })
 })
 
-app.post('/checkout-payment', async (req, res) => {
+app.post('/api/checkout-payment', async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.create({
       submit_type: 'pay',
