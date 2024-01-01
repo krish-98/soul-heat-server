@@ -3,7 +3,6 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import Stripe from 'stripe'
 import mongoose from 'mongoose'
-// import CartItems from './models/cartItems.models.js'
 
 import restaurantRouter from './routes/restaurant.routes.js'
 import cartRouter from './routes/cart.routes.js'
