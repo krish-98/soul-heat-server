@@ -6,7 +6,7 @@ import {
 
 const router = Router()
 
-router.get('/restaurants', allRestaurants)
-router.get('/restaurant/:id', restaurantInfo)
+router.get('/', allRestaurants)
+router.get('/:id', restaurantInfo)
 
 export default router
